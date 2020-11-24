@@ -329,6 +329,14 @@ class HTML_Import extends WP_Importer {
 		$options = get_option( 'html_import' );
 		$updatepost = false;
 		
+// If the filename is not index.html, then use the filename rather the title for the slug
+// https://dev.camcycle.org.uk/wp-admin/options-general.php?page=html-import.php
+// If the box is ticked, then /foo/index.html wrongly ends up as index-1, index-2, etc.; if not ticked then as foo/ correctly
+// If the box is ticked, then /foo/bar.html correctly ends up as bar; if not ticked then as title-in-bar-page
+if (!preg_match ('|/index.html$|', $path)) {
+	$options['preserve_slugs'] = '1';
+}
+
 		if ( $placeholder ) {
 			$title = trim( strrchr( $path,'/' ),'/' );
 			$title = str_replace( '_', ' ', $title );
@@ -638,7 +646,7 @@ class HTML_Import extends WP_Importer {
 		
 		// if so, set to update instead of import
 		if ( !is_wp_error( $previous_import ) && !empty( $previous_import ) 
-		 		&& $previous_import->post_title = $my_post['post_title'] ) {
+		 		&& $previous_import->post_title == $my_post['post_title'] ) {
 			$post_id = $previous_import->ID;
 			$updatepost = true;
 		}
@@ -1111,7 +1119,7 @@ class HTML_Import extends WP_Importer {
 			if ( validate_import_file( $options['root_directory'] ) > 0 )
 				wp_die( __( "The beginning directory you entered is not an absolute path. Relative paths are not allowed here.", 'import-html-pages' ) );
 			
-			$this->table = '';
+			$this->table = array ();
 			$this->redirects = '';
 			$this->filearr = array();
 			$skipdirs = explode( ",", $options['skipdirs'] );
